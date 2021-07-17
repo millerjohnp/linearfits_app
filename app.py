@@ -31,7 +31,7 @@ df = pd.read_csv("results.csv",
         "test_accuracy_ci": ast.literal_eval,
         "shift_accuracy_ci": ast.literal_eval
     })
-df["model_types"] = df.apply(utils.get_model_type, axis=1)
+df["model_type"] = df.apply(utils.get_model_type, axis=1)
 
 # TODO: Add more (ImageNet, YCB-Objects, etc)
 universe = st.sidebar.selectbox(
