@@ -85,7 +85,7 @@ scaling = st.sidebar.selectbox(
     "Axis scaling:", ["probit", "logit", "linear"], index=0)
 
 if st.sidebar.checkbox(f"Show only a subset of models?", value=False):
-    model_types = list(selected_df.model_types.unique())
+    model_types = list(selected_df.model_type.unique())
     types_to_show = set(st.sidebar.multiselect(f"Models to show", options=model_types))
     if len(types_to_show):
         selected_df = selected_df[selected_df.model_type.isin(types_to_show)]

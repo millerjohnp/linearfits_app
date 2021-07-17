@@ -94,7 +94,7 @@ def plot(df, metric="accuracy", scaling="probit"):
             y_errs=list(df[f"shift_{metric}_ci"].values),
             model_names=list(df.apply(get_name, axis=1)),
             scaling=scaling,
-            colors=df.model_types.apply(lambda x: COLOR_MAP[x]),
+            colors=df.model_type.apply(lambda x: COLOR_MAP[x]),
         )
     )
     
