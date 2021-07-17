@@ -33,26 +33,52 @@ df = pd.read_csv("results.csv",
     })
 df["model_types"] = df.apply(utils.get_model_type, axis=1)
 
-train_sets = sorted(df.train_set.unique())
+# TODO: Add more (ImageNet, YCB-Objects, etc)
+universe = st.sidebar.selectbox(
+    "Dataset universe", ["CIFAR-10", "WILDS"], index=0)
+
+if universe == "CIFAR-10":
+    shift_type = st.sidebar.selectbox(
+        "Distribution shift type", [
+            "Dataset reproduction",
+            "Benchmark shift",
+            "Synthetic perturbations",
+        ],
+        index=0
+    )
+    train_sets = ["cifar10-train"]
+    if shift_type == "Dataset reproduction":
+        test_sets = ["cifar10-test"]
+        shift_sets = ["cifar10.1-v4", "cifar10.1-v6", "cifar10.2-test", "cifar10.2-all"]
+    elif shift_type == "Benchmark shift":
+        test_sets = ["cifar10-test", "cifar10-test-STL10classes"]
+        shift_sets = ["cinic10", "STL10"]
+    else:
+        test_sets = ["cifar10-test"]
+        shift_sets = sorted([ts for ts in df.shift_set.unique() if "cifar10c" in ts])
+elif universe == "WILDS":
+    task = st.sidebar.selectbox(
+        "Task", [
+            "FMoW",
+        ],
+        index=0
+    )
+    if task == "FMoW":
+        train_sets = ["FMoW-train"]
+        test_sets = ["FMoW-id_val", "FMoW-id_test"]
+        shift_sets = ["FMoW-ood_val", "FMoW-ood_test"]
+
 train_set = st.sidebar.selectbox(
-    "Train dataset:", train_sets, index=train_sets.index("cifar10-train"))
-
-df_train = df[df.train_set == train_set]
-test_sets = sorted(df_train.test_set.unique())
-shift_sets = sorted(df_train.shift_set.unique())
-if "cifar10-train" == train_set:
-    test_default_idx = test_sets.index("cifar10-test")
-    shift_default_idx = shift_sets.index("cifar10.2-test")
-else:
-    test_default_idx, shift_default_idx = 0, 0
+    "Train dataset:", train_sets, index=0)
 test_set = st.sidebar.selectbox(
-    "Test dataset (x-axis):", test_sets, index=test_default_idx)
+    "Test dataset (x-axis):", test_sets, index=0)
 shift_set = st.sidebar.selectbox(
-    "Shift dataset (y-axis):", shift_sets, index=shift_default_idx)
+    "Shift dataset (y-axis):", shift_sets, index=0)
 
-selected_df = df_train[
-    (df_train.test_set == test_set)
-    & (df_train.shift_set == shift_set)
+selected_df = df[
+    (df.train_set == train_set)
+    & (df.test_set == test_set)
+    & (df.shift_set == shift_set)
 ]
 
 scaling = st.sidebar.selectbox(
