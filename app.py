@@ -49,7 +49,7 @@ if universe == "CIFAR-10":
     train_sets = ["cifar10-train"]
     if shift_type == "Dataset reproduction":
         test_sets = ["cifar10-test"]
-        shift_sets = ["cifar10.1-v4", "cifar10.1-v6", "cifar10.2-test", "cifar10.2-all"]
+        shift_sets = ["cifar10.2-test", "cifar10.1-v6", "cifar10.2-all"]
     elif shift_type == "Benchmark shift":
         test_sets = ["cifar10-test", "cifar10-test-STL10classes"]
         shift_sets = ["cinic10", "STL10"]
