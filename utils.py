@@ -5,6 +5,8 @@ from plotly.subplots import make_subplots
 from scipy.stats import norm
 import statsmodels.api as sm
 
+import streamlit as st
+
 COLOR_MAP = {
     "Neural Network": "blue",
     "ImageNet Pretrained Network": "cyan",
@@ -42,6 +44,10 @@ def linear_fit(x, y):
     """Returns bias and slope from regression y on x."""
     x = np.array(x)
     y = np.array(y)
+    
+    invalid_idx = np.isnan(x) | np.isinf(x) | np.isnan(y) | np.isinf(y)
+    x = x[~invalid_idx]
+    y = y[~invalid_idx]
 
     covs = sm.add_constant(x, prepend=True)
     model = sm.OLS(y, covs)
@@ -49,7 +55,7 @@ def linear_fit(x, y):
     return result.params, result.rsquared
 
 
-def plot(df, metric="accuracy", scaling="probit"):
+def plot(df, scaling="probit", metric="accuracy"):
     """Generate an interactive scatter plot."""
     test_sets = df.test_set.unique()
     shift_sets = df.shift_set.unique()
@@ -73,12 +79,12 @@ def plot(df, metric="accuracy", scaling="probit"):
         family = row.model_family
         hparams = row.hyperparameters
         if family in ["AdaBoost", "KNN", "RandomFeatures", "RandomForest"]:
-            return color_map[family]
+            return COLOR_MAP[family]
         if family in ["LogisticRegression", "RidgeClassifier", "SVM", "SGDClassifier"]:
-            return color_map["Linear Model"]
+            return COLOR_MAP["Linear Model"]
         if "pretrained" in hparams and hparams["pretrained"]:
-            return color_map["ImageNet Pretrained Network"]
-        return color_map["Neural Network"]
+            return COLOR_MAP["ImageNet Pretrained Network"]
+        return COLOR_MAP["Neural Network"]
     
     def get_name(row):
         model_name = row.model_family + "<br>"
@@ -98,13 +104,12 @@ def plot(df, metric="accuracy", scaling="probit"):
         )
     )
     
-    # TODO: This still sort of bakes in accuracy
-    acc_min, acc_max = 0.01, 0.99 # Avoid numerical issues
+    metric_min, metric_max = 0.01, 0.99 # Avoid numerical issues
     traces.append(
         go.Scatter(
             mode="lines",
-            x=rescale(np.arange(acc_min, acc_max + 0.01, 0.01), scaling),
-            y=rescale(np.arange(acc_min, acc_max + 0.01, 0.01), scaling),
+            x=rescale(np.arange(metric_min, metric_max + 0.01, 0.01), scaling),
+            y=rescale(np.arange(metric_min, metric_max + 0.01, 0.01), scaling),
             name="y=x",
             line=dict(color="black", dash="dashdot")
         )
@@ -113,10 +118,10 @@ def plot(df, metric="accuracy", scaling="probit"):
     for trace in traces:
         fig.add_trace(trace, row=1, col=1)
 
-    ax_range = [rescale(acc_min, scaling), rescale(acc_max, scaling)]
+    ax_range = [rescale(metric_min, scaling), rescale(metric_max, scaling)]
     fig.update_xaxes(title_text=f"{test_set} {metric}", range=ax_range, row=1, col=1)
     fig.update_yaxes(title_text=f"{shift_set} {metric}", range=ax_range, row=1, col=1)
-    tickmarks = np.array([0.1, 0.25, 0.5, 0.7, 0.8, 0.9, 0.95, acc_max])
+    tickmarks = np.array([0.1, 0.25, 0.5, 0.7, 0.8, 0.9, 0.95, metric_max])
     ticks = dict(
         tickmode="array",
         tickvals=rescale(tickmarks, scaling),

@@ -29,11 +29,15 @@ df = pd.read_csv("results.csv",
     converters={
         "hyperparameters": ast.literal_eval,
         "test_accuracy_ci": ast.literal_eval,
-        "shift_accuracy_ci": ast.literal_eval
+        "shift_accuracy_ci": ast.literal_eval,
+        "test_macro_f1_ci": ast.literal_eval,
+        "shift_macro_f1_ci": ast.literal_eval,
+        "test_worst_region_accuracy_ci": ast.literal_eval,
+        "shift_worst_region_accuracy_ci": ast.literal_eval,
     })
 df["model_type"] = df.apply(utils.get_model_type, axis=1)
 
-# TODO: Add more (ImageNet, YCB-Objects, etc)
+# TODO: Add YCB-Objects
 universe = st.sidebar.selectbox(
     "Dataset universe", ["CIFAR-10", "WILDS"], index=0)
 
@@ -56,10 +60,11 @@ if universe == "CIFAR-10":
     else:
         test_sets = ["cifar10-test"]
         shift_sets = sorted([ts for ts in df.shift_set.unique() if "cifar10c" in ts])
+    metrics = ["accuracy"]
 elif universe == "WILDS":
     task = st.sidebar.selectbox(
         "Task", [
-            "FMoW",
+            "FMoW", "IWildCam", "Camelyon17"
         ],
         index=0
     )
@@ -67,6 +72,17 @@ elif universe == "WILDS":
         train_sets = ["FMoW-train"]
         test_sets = ["FMoW-id_val", "FMoW-id_test"]
         shift_sets = ["FMoW-ood_val", "FMoW-ood_test"]
+        metrics = ["accuracy", "worst_region_accuracy"]
+    elif task == "IWildCam":
+        train_sets = ["IWildCamOfficialV2-train"]
+        test_sets = ["IWildCamOfficialV2-id_val", "IWildCamOfficialV2-id_test"]
+        shift_sets = ["IWildCamOfficialV2-ood_val", "IWildCamOfficialV2-ood_test"]
+        metrics = ["accuracy", "macro_f1"]
+    elif task == "Camelyon17":
+        train_sets = ["Camelyon17-train"]
+        test_sets = ["Camelyon17-id_val", "Camelyon17-id_test"]
+        shift_sets = ["Camelyon17-ood_val", "Camelyon17-ood_test"]
+        metrics = ["accuracy"]
 
 train_set = st.sidebar.selectbox(
     "Train dataset:", train_sets, index=0)
@@ -84,13 +100,16 @@ selected_df = df[
 scaling = st.sidebar.selectbox(
     "Axis scaling:", ["probit", "logit", "linear"], index=0)
 
+metric = st.sidebar.selectbox(
+    "Metric: ", metrics, index=0)
+
 if st.sidebar.checkbox(f"Show only a subset of models?", value=False):
     model_types = list(selected_df.model_type.unique())
     types_to_show = set(st.sidebar.multiselect(f"Models to show", options=model_types))
     if len(types_to_show):
         selected_df = selected_df[selected_df.model_type.isin(types_to_show)]
 
-st.plotly_chart(utils.plot(selected_df, scaling=scaling))
+st.plotly_chart(utils.plot(selected_df, scaling=scaling, metric=metric))
 
 "To visualize only a subset of model types (e.g. just Linear Models), check the box to show only a subset of models in the left sidebar."
 
