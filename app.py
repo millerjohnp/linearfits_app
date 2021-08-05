@@ -25,21 +25,26 @@ Visualize and download evaluation data from our testbed below (options in the le
 """
 )
 
-df = pd.read_csv("results.csv",
-    converters={
-        "hyperparameters": ast.literal_eval,
-        "test_accuracy_ci": ast.literal_eval,
-        "shift_accuracy_ci": ast.literal_eval,
-        "test_macro_f1_ci": ast.literal_eval,
-        "shift_macro_f1_ci": ast.literal_eval,
-        "test_worst_region_accuracy_ci": ast.literal_eval,
-        "shift_worst_region_accuracy_ci": ast.literal_eval,
-    })
-df["model_type"] = df.apply(utils.get_model_type, axis=1)
+@st.cache
+def load_data():
+    df = pd.read_csv("results.csv",
+        converters={
+            "hyperparameters": ast.literal_eval,
+            "test_accuracy_ci": ast.literal_eval,
+            "shift_accuracy_ci": ast.literal_eval,
+            "test_macro_f1_ci": ast.literal_eval,
+            "shift_macro_f1_ci": ast.literal_eval,
+            "test_worst_region_accuracy_ci": ast.literal_eval,
+            "shift_worst_region_accuracy_ci": ast.literal_eval,
+        })
+    df["model_type"] = df.apply(utils.get_model_type, axis=1)
+    return df
+
+df = load_data()
 
 # TODO: Add YCB-Objects
 universe = st.sidebar.selectbox(
-    "Dataset universe", ["CIFAR-10", "WILDS"], index=0)
+    "Dataset universe", ["CIFAR-10", "WILDS", "YCB-Objects"], index=0)
 
 if universe == "CIFAR-10":
     shift_type = st.sidebar.selectbox(
@@ -83,6 +88,12 @@ elif universe == "WILDS":
         test_sets = ["Camelyon17-id_val", "Camelyon17-id_test"]
         shift_sets = ["Camelyon17-ood_val", "Camelyon17-ood_test"]
         metrics = ["accuracy"]
+elif universe == "YCB-Objects":
+    train_sets = ["YCB Train 50k examples", "YCB Train 100k examples"]
+    test_sets = ["YCB ID Test"]
+    shift_sets = ["YCB OOD Test"]
+    metrics = ["accuracy"]
+
 
 train_set = st.sidebar.selectbox(
     "Train dataset:", train_sets, index=0)
